@@ -44,6 +44,7 @@ def main():
         trips, busy = check_busy(busy, new_free, trips)
         free = new_free
         print(datetime.now())
+        print(busy)
         print(trips)
         time.sleep(60)
 
