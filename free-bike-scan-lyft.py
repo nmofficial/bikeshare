@@ -2,6 +2,9 @@ import urllib.request, json
 import time
 from datetime import datetime
 
+#lyft: "https://s3.amazonaws.com/lyft-lastmile-production-iad/lbs/dca/free_bike_status.json"
+#bird: https://gbfs.bird.co/dc
+
 def get_bikes(data):
     new_free = {}
     bikes = data["data"]["bikes"]
@@ -14,38 +17,32 @@ def get_bikes(data):
             print(elt)
     return new_free
 
-def check_free(old_free, new_free, busy):
+def check_change(old_free, new_free):
+    change = {}
     bike_ids = old_free.keys()
     for bid in bike_ids:
         if bid not in new_free:
-            busy[bid] = old_free[bid]
-    return busy
+            change[bid] = old_free[bid]
+    return change
 
-def check_busy(busy, free, trips):
-    busy_bids = busy.keys()
-    for bid in busy_bids:
-        if bid in free:
-            trips.append(busy[bid], free[bid])
-            busy.pop(bid)
-    return (trips, busy)
-            
 def main():
-    with urllib.request.urlopen("https://s3.amazonaws.com/lyft-lastmile-production-iad/lbs/dca/free_bike_status.json") as url:
+    with urllib.request.urlopen("https://gbfs.bird.co/dc") as url:
         data = json.load(url)
     
     free = get_bikes(data)
-    busy = {}
-    trips = []
+    disappear_file = open("disappear.txt", 'a')
+    reappear_file = open("reappear.txt", 'a')
     while True:
-        with urllib.request.urlopen("https://s3.amazonaws.com/lyft-lastmile-production-iad/lbs/dca/free_bike_status.json") as url:
+        with urllib.request.urlopen("https://gbfs.bird.co/d") as url:
             new_data = json.load(url)
         new_free = get_bikes(new_data)
-        busy = check_free(free, new_free, busy)
-        trips, busy = check_busy(busy, new_free, trips)
-        free = new_free
+        disappear = check_change(free, new_free)
+        reappear = check_change(new_free, free)
+        print(disappear, file=disappear_file)
+        print(reappear, file=reappear_file)
         print(datetime.now())
-        print(busy)
-        print(trips)
+        print(disappear.keys())
+        print(reappear.keys())
         time.sleep(60)
 
 if __name__ == "__main__":
