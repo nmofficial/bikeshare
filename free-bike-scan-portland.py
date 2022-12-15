@@ -25,11 +25,13 @@ def get_bikes_coord(data):
     bikes = data["data"]["bikes"]
     time = datetime.now()
     for elt in bikes:
-        lat = round(elt["lat"], 2)
-        lon = round(elt["lon"], 2)
+        lat = round(elt["lat"], 5)
+        lon = round(elt["lon"], 5)
         rng = elt["current_range_meters"]
-        fuel = round(elt["current_fuel_percent"], 4)
+        fuel = elt["current_fuel_percent"]
         elt["time"] = time
+        if (lat, lon, rng, fuel) in new_free:
+            print("DANGER")
         new_free[(lat, lon, rng, fuel)] = elt
         if elt["is_reserved"] != 0:
             print(elt)
